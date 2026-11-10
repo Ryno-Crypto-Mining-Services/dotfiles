@@ -1,0 +1,4 @@
+[alias]
+	st = status
+	df = diff
+	lg = log --oneline --decorate -10

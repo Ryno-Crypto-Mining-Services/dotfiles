@@ -1,0 +1,5 @@
+# Common editor and operating-system noise.
+.DS_Store
+Thumbs.db
+*~
+*.swp

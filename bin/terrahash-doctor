@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+status=0
+os=$(uname -s 2>/dev/null || printf '%s' unknown)
+architecture=$(uname -m 2>/dev/null || printf '%s' unknown)
+case $architecture in
+x86_64 | amd64) architecture=x86_64 ;;
+aarch64 | arm64) architecture=arm64 ;;
+i?86) architecture=x86 ;;
+*) architecture=other ;;
+esac
+
+printf 'Platform: %s/%s; diagnostic shell: bash\n' "$os" "$architecture"
+
+for tool in bash git; do
+  if command -v "$tool" >/dev/null 2>&1 || { [ "$tool" = bash ] && [ -n "${BASH_VERSION:-}" ]; }; then
+    printf 'Baseline %s: available\n' "$tool"
+  else
+    printf 'Baseline %s: missing\n' "$tool"
+    status=1
+  fi
+done
+
+if [ -n "${HOME:-}" ] && [ -f "$HOME/.local/state/terrahash-dotfiles/owner" ]; then
+  printf '%s\n' 'Dotfiles installation: registered'
+else
+  printf '%s\n' 'Dotfiles installation: not registered'
+fi
+
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  printf '%s\n' 'Git worktree: yes'
+else
+  printf '%s\n' 'Git worktree: no'
+fi
+
+for tool in gh jq rg python3 node docker kubectl ansible terraform; do
+  if command -v "$tool" >/dev/null 2>&1; then
+    printf 'Optional %s: available\n' "$tool"
+  else
+    printf 'Optional %s: unavailable\n' "$tool"
+  fi
+done
+
+exit "$status"

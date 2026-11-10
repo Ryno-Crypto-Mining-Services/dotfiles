@@ -1,0 +1,43 @@
+name: dotfiles checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install lint tools on Ubuntu
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt
+
+      - name: Install lint tools on macOS
+        if: runner.os == 'macOS'
+        run: brew install shellcheck shfmt
+
+      - name: Validate Bash syntax
+        run: bash -n install.sh uninstall.sh scripts/*.sh shell/common.sh shell/bash.sh bin/terrahash-doctor
+
+      - name: Run isolated tests
+        run: bash scripts/test.sh
+
+      - name: Run ShellCheck
+        run: |
+          shellcheck --shell=bash install.sh uninstall.sh scripts/*.sh shell/bash.sh bin/terrahash-doctor
+          shellcheck --shell=bash shell/common.sh
+
+      - name: Check formatting
+        run: shfmt -d -i 2 install.sh uninstall.sh scripts/*.sh shell/common.sh shell/bash.sh bin/terrahash-doctor

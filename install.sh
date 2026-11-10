@@ -17,24 +17,31 @@ dry_run=0
 enable_zsh=0
 for option in "$@"; do
   case $option in
-    --dry-run) dry_run=1 ;;
-    --zsh) enable_zsh=1 ;;
-    --help) usage; exit 0 ;;
-    *) printf 'install.sh: unsupported option: %s\n' "$option" >&2; usage >&2; exit 2 ;;
+  --dry-run) dry_run=1 ;;
+  --zsh) enable_zsh=1 ;;
+  --help)
+    usage
+    exit 0
+    ;;
+  *)
+    printf 'install.sh: unsupported option: %s\n' "$option" >&2
+    usage >&2
+    exit 2
+    ;;
   esac
 done
 
 script_path=$0
 case $script_path in
-  */*) ;;
-  *) script_path=$(command -v "$script_path") || {
-    printf '%s\n' 'install.sh: cannot locate this script.' >&2
-    exit 1
-  } ;;
+*/*) ;;
+*) script_path=$(command -v "$script_path") || {
+  printf '%s\n' 'install.sh: cannot locate this script.' >&2
+  exit 1
+} ;;
 esac
 case $script_path in
-  /*) ;;
-  *) script_path=./$script_path ;;
+/*) ;;
+*) script_path=./$script_path ;;
 esac
 repo_dir=$(CDPATH='' cd -P "$(dirname "$script_path")" && pwd -P) || {
   printf '%s\n' 'install.sh: cannot resolve the repository directory.' >&2
@@ -54,12 +61,12 @@ if [ -e "$HOME/.gitconfig" ] || [ -L "$HOME/.gitconfig" ]; then
 else
   git_config_home=${XDG_CONFIG_HOME:-$HOME/.config}
   case $git_config_home in
-    /*) ;;
-    *) th_die 'XDG_CONFIG_HOME must be absolute when set.' ;;
+  /*) ;;
+  *) th_die 'XDG_CONFIG_HOME must be absolute when set.' ;;
   esac
   [ "$git_config_home" != / ] || th_die 'Refusing to use / as XDG_CONFIG_HOME.'
   case $git_config_home in
-    *$'\n'* | *$'\r'*) th_die 'XDG_CONFIG_HOME cannot contain a newline.' ;;
+  *$'\n'* | *$'\r'*) th_die 'XDG_CONFIG_HOME cannot contain a newline.' ;;
   esac
   if [ -L "$git_config_home" ] || [ -L "$git_config_home/git" ]; then
     th_die 'Refusing a symlinked Git configuration directory.'

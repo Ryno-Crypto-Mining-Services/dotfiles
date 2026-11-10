@@ -5,6 +5,7 @@ set -eu
 repo=$(CDPATH='' cd -P "$(dirname "$0")/.." && pwd -P)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/terrahash-dotfiles-tests.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
+tmp=$(CDPATH='' cd -P "$tmp" && pwd -P)
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -86,8 +87,8 @@ run "$repo/uninstall.sh" >/dev/null
 
 printf '%s\n' 'Test 3-5, 13, 17, 22: preserve existing files, back up changes, and honor personal Git settings'
 new_home 'existing files'
-printf 'personal bash setting\n' > "$test_home/.bashrc"
-cat > "$test_home/.gitconfig" <<'EOF'
+printf 'personal bash setting\n' >"$test_home/.bashrc"
+cat >"$test_home/.gitconfig" <<'EOF'
 [user]
 	name = Local Test User
 	email = local@example.invalid
@@ -119,8 +120,8 @@ original_git_backup=$(find "$test_home/.local/state/terrahash-dotfiles/backups" 
 before_uninstall=$(backup_count)
 run "$repo/install.sh" >/dev/null
 [ "$(backup_count)" -eq "$before_uninstall" ] || fail 'no-change install created a backup'
-printf 'later user bash edit\n' >> "$test_home/.bashrc"
-printf '\n# later user Git edit\n' >> "$test_home/.gitconfig"
+printf 'later user bash edit\n' >>"$test_home/.bashrc"
+printf '\n# later user Git edit\n' >>"$test_home/.gitconfig"
 run "$repo/uninstall.sh" >/dev/null
 assert_file_contains "$test_home/.bashrc" 'personal bash setting'
 assert_file_contains "$test_home/.bashrc" 'later user bash edit'
@@ -151,14 +152,14 @@ run "$space_repo/uninstall.sh" >/dev/null
 
 printf '%s\n' 'Test 18: symlinked startup files are rejected safely'
 new_home 'symlink target'
-printf 'keep me\n' > "$test_home/target"
+printf 'keep me\n' >"$test_home/target"
 ln -s "$test_home/target" "$test_home/.bashrc"
 if run "$repo/install.sh" >/dev/null 2>&1; then
   fail 'installer followed a symlinked startup file'
 fi
 [ "$(cat "$test_home/target")" = 'keep me' ] || fail 'symlink target was changed'
 new_home 'unmanaged Zsh symlink'
-printf 'leave Zsh alone\n' > "$test_home/zsh-target"
+printf 'leave Zsh alone\n' >"$test_home/zsh-target"
 ln -s "$test_home/zsh-target" "$test_home/.zshrc"
 run "$repo/install.sh" >/dev/null
 run "$repo/uninstall.sh" >/dev/null
@@ -169,7 +170,7 @@ run "$repo/uninstall.sh" >/dev/null
 printf '%s\n' 'Test XDG Git configuration precedence'
 new_home 'XDG Git config'
 mkdir -p "$test_home/.config/git"
-cat > "$test_home/.config/git/config" <<'EOF'
+cat >"$test_home/.config/git/config" <<'EOF'
 [alias]
 	st = show
 EOF
@@ -180,7 +181,7 @@ run "$repo/uninstall.sh" >/dev/null
 
 printf '%s\n' 'Test 19: malformed managed markers are rejected'
 new_home 'malformed markers'
-printf '%s\n' '# >>> terrahash-dotfiles managed: bash >>>' > "$test_home/.bashrc"
+printf '%s\n' '# >>> terrahash-dotfiles managed: bash >>>' >"$test_home/.bashrc"
 if run "$repo/install.sh" >/dev/null 2>&1; then
   fail 'installer accepted malformed managed markers'
 fi
@@ -189,7 +190,7 @@ fi
 printf '%s\n' 'Test uninstall refuses user-modified managed content'
 new_home 'modified managed content'
 run "$repo/install.sh" >/dev/null
-sed 's@/shell/bash.sh@/shell/changed.sh@' "$test_home/.bashrc" > "$tmp/modified-bashrc"
+sed 's@/shell/bash.sh@/shell/changed.sh@' "$test_home/.bashrc" >"$tmp/modified-bashrc"
 mv "$tmp/modified-bashrc" "$test_home/.bashrc"
 if run "$repo/uninstall.sh" >/dev/null 2>&1; then
   fail 'uninstaller removed user-modified managed content'

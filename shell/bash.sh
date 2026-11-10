@@ -1,6 +1,6 @@
 case $- in
-  *i*) ;;
-  *) return 0 ;;
+*i*) ;;
+*) return 0 ;;
 esac
 
 # shellcheck disable=SC1091

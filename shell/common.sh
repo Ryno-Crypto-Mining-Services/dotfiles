@@ -1,12 +1,15 @@
 case $- in
-  *i*) ;;
-  *) return 0 ;;
+*i*) ;;
+*) return 0 ;;
 esac
 
 if [ -n "${1:-}" ]; then
   case ":$PATH:" in
-    *":$1:"*) ;;
-    *) PATH="$1${PATH:+:$PATH}"; export PATH ;;
+  *":$1:"*) ;;
+  *)
+    PATH="$1${PATH:+:$PATH}"
+    export PATH
+    ;;
   esac
 fi
 

@@ -11,11 +11,11 @@ th_die() {
 th_validate_home() {
   [ -n "${HOME:-}" ] || th_die 'HOME is empty.'
   case $HOME in
-    /*) ;;
-    *) th_die 'HOME must be an absolute path.' ;;
+  /*) ;;
+  *) th_die 'HOME must be an absolute path.' ;;
   esac
   case $HOME in
-    *$'\n'* | *$'\r'*) th_die 'HOME cannot contain a newline.' ;;
+  *$'\n'* | *$'\r'*) th_die 'HOME cannot contain a newline.' ;;
   esac
   if ! { [ -d "$HOME" ] && [ -r "$HOME" ] && [ -w "$HOME" ] && [ -x "$HOME" ]; }; then
     th_die 'HOME must be an accessible, writable directory.'
@@ -27,20 +27,20 @@ th_validate_home() {
 
 th_repo_path() {
   case $0 in
-    */*) script_path=$0 ;;
-    *) script_path=$(command -v "$0") || th_die 'Cannot locate this script.' ;;
+  */*) script_path=$0 ;;
+  *) script_path=$(command -v "$0") || th_die 'Cannot locate this script.' ;;
   esac
   case $script_path in
-    /*) ;;
-    *) script_path=./$script_path ;;
+  /*) ;;
+  *) script_path=./$script_path ;;
   esac
   TH_REPO=$(CDPATH='' cd -P "$(dirname "$script_path")" && pwd -P) ||
     th_die 'Cannot resolve the repository directory.'
   case $TH_REPO in
-    *:*) th_die 'The checkout path cannot contain a colon because it is added to PATH.' ;;
+  *:*) th_die 'The checkout path cannot contain a colon because it is added to PATH.' ;;
   esac
   case $TH_REPO in
-    *$'\n'* | *$'\r'*) th_die 'The checkout path cannot contain a newline.' ;;
+  *$'\n'* | *$'\r'*) th_die 'The checkout path cannot contain a newline.' ;;
   esac
 }
 
@@ -49,7 +49,7 @@ th_init_paths() {
   TH_BACKUP_DIR=$TH_STATE_DIR/backups
   TH_LOCK_DIR=$TH_STATE_DIR/lock
   case $TH_STATE_DIR/ in
-    "$TH_REPO/"*) th_die 'Installation state and backups must be outside the checkout.' ;;
+  "$TH_REPO/"*) th_die 'Installation state and backups must be outside the checkout.' ;;
   esac
 }
 
@@ -147,7 +147,7 @@ th_new_temp() {
   if [ -f "$target" ]; then
     cp -p "$target" "$TH_TEMP_FILE" ||
       th_die "Cannot preserve configuration file metadata: $target"
-    : > "$TH_TEMP_FILE" || th_die "Cannot prepare temporary file for $target"
+    : >"$TH_TEMP_FILE" || th_die "Cannot prepare temporary file for $target"
   else
     chmod 600 "$TH_TEMP_FILE" || th_die "Cannot secure temporary file for $target"
   fi
@@ -158,13 +158,13 @@ th_append_block() {
   block=$2
   th_new_temp "$target"
   if [ -f "$target" ]; then
-    cat "$target" > "$TH_TEMP_FILE" || th_die "Cannot copy $target"
+    cat "$target" >"$TH_TEMP_FILE" || th_die "Cannot copy $target"
   fi
   if [ -s "$TH_TEMP_FILE" ]; then
     last_byte=$(tail -c 1 "$TH_TEMP_FILE" | od -An -t x1 | tr -d '[:space:]')
-    [ "$last_byte" = 0a ] || printf '\n' >> "$TH_TEMP_FILE"
+    [ "$last_byte" = 0a ] || printf '\n' >>"$TH_TEMP_FILE"
   fi
-  printf '%s\n' "$block" >> "$TH_TEMP_FILE" ||
+  printf '%s\n' "$block" >>"$TH_TEMP_FILE" ||
     th_die "Cannot prepare updated configuration: $target"
   th_backup "$target"
   mv -f "$TH_TEMP_FILE" "$target" || th_die "Cannot replace configuration file: $target"
@@ -176,10 +176,10 @@ th_prepend_block() {
   target=$1
   block=$2
   th_new_temp "$target"
-  printf '%s\n' "$block" > "$TH_TEMP_FILE" ||
+  printf '%s\n' "$block" >"$TH_TEMP_FILE" ||
     th_die "Cannot prepare updated configuration: $target"
   if [ -f "$target" ]; then
-    cat "$target" >> "$TH_TEMP_FILE" || th_die "Cannot copy $target"
+    cat "$target" >>"$TH_TEMP_FILE" || th_die "Cannot copy $target"
   fi
   th_backup "$target"
   mv -f "$TH_TEMP_FILE" "$target" || th_die "Cannot replace configuration file: $target"
@@ -197,7 +197,7 @@ th_remove_block() {
     inside && $0 == e { inside = 0; next }
     !inside { print }
     END { if (inside) exit 2 }
-  ' "$target" > "$TH_TEMP_FILE" ||
+  ' "$target" >"$TH_TEMP_FILE" ||
     th_die "Cannot safely remove the managed block from $target"
   th_backup "$target"
   mv -f "$TH_TEMP_FILE" "$target" || th_die "Cannot replace configuration file: $target"
@@ -275,20 +275,32 @@ th_owner_read() {
   OWNER_ZSH=
   while IFS= read -r line || [ -n "$line" ]; do
     case $line in
-      repo=*) [ -z "$OWNER_REPO" ] || th_die "Malformed installation state: $owner"; OWNER_REPO=${line#repo=} ;;
-      excludes=0 | excludes=1) [ -z "$OWNER_EXCLUDES" ] || th_die "Malformed installation state: $owner"; OWNER_EXCLUDES=${line#excludes=} ;;
-      gitconfig=*) [ -z "$OWNER_GIT_CONFIG" ] || th_die "Malformed installation state: $owner"; OWNER_GIT_CONFIG=${line#gitconfig=} ;;
-      zsh=0 | zsh=1) [ -z "$OWNER_ZSH" ] || th_die "Malformed installation state: $owner"; OWNER_ZSH=${line#zsh=} ;;
-      *) th_die "Malformed installation state: $owner" ;;
+    repo=*)
+      [ -z "$OWNER_REPO" ] || th_die "Malformed installation state: $owner"
+      OWNER_REPO=${line#repo=}
+      ;;
+    excludes=0 | excludes=1)
+      [ -z "$OWNER_EXCLUDES" ] || th_die "Malformed installation state: $owner"
+      OWNER_EXCLUDES=${line#excludes=}
+      ;;
+    gitconfig=*)
+      [ -z "$OWNER_GIT_CONFIG" ] || th_die "Malformed installation state: $owner"
+      OWNER_GIT_CONFIG=${line#gitconfig=}
+      ;;
+    zsh=0 | zsh=1)
+      [ -z "$OWNER_ZSH" ] || th_die "Malformed installation state: $owner"
+      OWNER_ZSH=${line#zsh=}
+      ;;
+    *) th_die "Malformed installation state: $owner" ;;
     esac
-  done < "$owner"
+  done <"$owner"
   if ! { [ -n "$OWNER_REPO" ] && [ -n "$OWNER_EXCLUDES" ] &&
     [ -n "$OWNER_GIT_CONFIG" ] && [ -n "$OWNER_ZSH" ]; }; then
     th_die "Malformed installation state: $owner"
   fi
   case $OWNER_GIT_CONFIG in
-    /*) ;;
-    *) th_die "Malformed installation state: $owner" ;;
+  /*) ;;
+  *) th_die "Malformed installation state: $owner" ;;
   esac
   return 0
 }
@@ -302,7 +314,7 @@ th_owner_write() {
   TH_TEMP_FILE=$(mktemp "$TH_STATE_DIR/.owner.XXXXXX") ||
     th_die 'Cannot create installation state.'
   chmod 600 "$TH_TEMP_FILE" || th_die 'Cannot secure installation state.'
-  printf 'repo=%s\nexcludes=%s\ngitconfig=%s\nzsh=%s\n' "$TH_REPO" "$1" "$2" "$3" > "$TH_TEMP_FILE" ||
+  printf 'repo=%s\nexcludes=%s\ngitconfig=%s\nzsh=%s\n' "$TH_REPO" "$1" "$2" "$3" >"$TH_TEMP_FILE" ||
     th_die 'Cannot write installation state.'
   mv -f "$TH_TEMP_FILE" "$owner" || th_die 'Cannot save installation state.'
   TH_TEMP_FILE=

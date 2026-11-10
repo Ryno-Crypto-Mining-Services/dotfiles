@@ -4,10 +4,10 @@ status=0
 os=$(uname -s 2>/dev/null || printf '%s' unknown)
 architecture=$(uname -m 2>/dev/null || printf '%s' unknown)
 case $architecture in
-  x86_64 | amd64) architecture=x86_64 ;;
-  aarch64 | arm64) architecture=arm64 ;;
-  i?86) architecture=x86 ;;
-  *) architecture=other ;;
+x86_64 | amd64) architecture=x86_64 ;;
+aarch64 | arm64) architecture=arm64 ;;
+i?86) architecture=x86 ;;
+*) architecture=other ;;
 esac
 
 printf 'Platform: %s/%s; diagnostic shell: bash\n' "$os" "$architecture"

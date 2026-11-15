@@ -211,6 +211,19 @@ PY
 if run_installer "$bad/scripts/install-cursor-skills.sh" --dry-run >/dev/null 2>&1; then
   fail 'installer accepted path traversal in file path'
 fi
+write_skill_tree "$bad" 'safe' '# Safe'
+write_manifest "$bad"
+python3 - "$bad/agent-skills/sources.json" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+data = json.loads(path.read_text())
+data["skills"][0]["destination"] = ".hidden-skill"
+path.write_text(json.dumps(data))
+PY
+if run_installer "$bad/scripts/install-cursor-skills.sh" --dry-run >/dev/null 2>&1; then
+  fail 'installer accepted a hidden destination name'
+fi
 write_skill_tree "$bad" 'dup-a' '# A'
 write_skill_tree "$bad" 'dup-b' '# B'
 write_manifest "$bad"

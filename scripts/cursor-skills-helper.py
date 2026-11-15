@@ -9,6 +9,7 @@ ${XDG_STATE_HOME:-$HOME/.local/state}/terrahash-dotfiles/cursor-skills/.
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -131,13 +132,27 @@ def validate_destination_name(name: str) -> str:
         die("Destination names must be non-empty.")
     if name in (".", ".."):
         die(f"Unsafe destination name: {name}")
+    if name.startswith("."):
+        die(f"Destination names cannot be hidden: {name}")
     if "/" in name or "\\" in name or "\0" in name:
         die(f"Destination names cannot contain path separators: {name}")
-    if name.startswith(".") and name not in (".cursor",):
-        # Allow ordinary skill names; reject hidden/relative tricks.
-        if name in (".", "..") or "/" in name:
-            die(f"Unsafe destination name: {name}")
+    if "terrahash-incomplete" in name or "terrahash-staging" in name or "terrahash-replaced" in name:
+        die(f"Destination name collides with installer markers: {name}")
     return name
+
+
+def move_dir(src: Path, dest: Path) -> None:
+    """Rename when possible; copy+remove across filesystems."""
+    try:
+        os.rename(src, dest)
+        return
+    except OSError as exc:
+        if getattr(exc, "errno", None) != errno.EXDEV:
+            raise
+    if dest.exists() or dest.is_symlink():
+        die(f"Cannot move onto existing path: {dest}")
+    shutil.copytree(src, dest, symlinks=False)
+    shutil.rmtree(src)
 
 
 def validate_license_info(license_info: Any, label: str) -> dict[str, str]:
@@ -458,9 +473,38 @@ def list_owned_destinations(paths: dict[str, Path]) -> list[str]:
     for child in sorted(managed.iterdir()):
         if child.is_symlink():
             die(f"Refusing symlinked ownership state: {child}")
+        if child.is_file() and child.name.endswith(".json.pending"):
+            continue
         if child.is_file() and child.suffix == ".json":
             names.append(child.stem)
     return names
+
+
+def finalize_pending_ownership(paths: dict[str, Path], skills_root: Path) -> None:
+    """Complete ownership writes left after a successful activate + interrupted finalize."""
+    managed = paths["managed"]
+    if not managed.exists():
+        return
+    ensure_no_symlink(managed, "managed state directory")
+    for pending in sorted(managed.glob("*.json.pending")):
+        ensure_no_symlink(pending, "pending ownership state")
+        destination = pending.name[: -len(".json.pending")]
+        dest_dir = skills_root / destination
+        if not dest_dir.is_dir() or dest_dir.is_symlink():
+            die(
+                f"Pending ownership exists without an installed skill directory for "
+                f"{destination}; inspect {pending} and {dest_dir}."
+            )
+        data = load_json(pending)
+        if not isinstance(data, dict) or data.get("destination") != destination:
+            die(f"Malformed pending ownership state: {pending}")
+        files = data.get("files")
+        if not isinstance(files, list) or not files_equal(files, inventory_directory(dest_dir)):
+            die(
+                f"Pending ownership for {destination} does not match installed content; "
+                "resolve manually."
+            )
+        os.replace(pending, ownership_path(paths, destination))
 
 
 def backup_skill(paths: dict[str, Path], destination: str, source: Path) -> Path:
@@ -641,46 +685,21 @@ def apply_action(
     skill = action["skill"]
     dest_dir = skills_root / destination
     incomplete = dest_dir.with_name(f".{destination}.terrahash-incomplete")
-    staging_root = paths["staging"]
+    staging = dest_dir.with_name(f".{destination}.terrahash-staging")
     paths["root"].mkdir(parents=True, exist_ok=True)
-    staging_root.mkdir(parents=True, exist_ok=True)
     skills_root.mkdir(parents=True, exist_ok=True)
     os.chmod(paths["root"], 0o700)
-    os.chmod(staging_root, 0o700)
+    paths["managed"].mkdir(parents=True, exist_ok=True)
+    os.chmod(paths["managed"], 0o700)
 
-    if incomplete.exists():
+    if incomplete.exists() or incomplete.is_symlink():
         die(f"Incomplete installation marker already present: {incomplete}")
-
-    staging = staging_root / destination
-    if staging.exists():
+    if staging.exists() or staging.is_symlink():
         shutil.rmtree(staging)
+
+    # Stage beside the destination so activation stays on the same filesystem.
     copy_skill_tree(skill["vendor_dir"], staging, skill["files"])
-
-    # Move staging into an incomplete marker beside the destination, then swap.
-    if incomplete.exists():
-        shutil.rmtree(incomplete)
-    os.rename(staging, incomplete)
-
-    if kind == "update":
-        backup_skill(paths, destination, dest_dir)
-        replaced = dest_dir.with_name(f".{destination}.terrahash-replaced")
-        if replaced.exists():
-            shutil.rmtree(replaced)
-        os.rename(dest_dir, replaced)
-        try:
-            os.rename(incomplete, dest_dir)
-        except OSError:
-            # Attempt to restore previous directory.
-            if not dest_dir.exists() and replaced.exists():
-                os.rename(replaced, dest_dir)
-            die(f"Failed to activate updated skill directory: {destination}")
-        shutil.rmtree(replaced)
-    else:
-        skills_root.mkdir(parents=True, exist_ok=True)
-        try:
-            os.rename(incomplete, dest_dir)
-        except OSError as exc:
-            die(f"Failed to install skill directory {destination}: {exc}")
+    move_dir(staging, incomplete)
 
     record = {
         "kind": MANAGED_KIND,
@@ -693,7 +712,36 @@ def apply_action(
         "vendor_path": skill["vendor_path"],
         "files": skill["files"],
     }
-    write_ownership(paths, record)
+    ownership = ownership_path(paths, destination)
+    pending = ownership.with_suffix(".json.pending")
+    if pending.exists() or pending.is_symlink():
+        pending.unlink()
+    write_json_atomic(pending, record, mode=0o600)
+
+    replaced: Path | None = None
+    try:
+        if kind == "update":
+            backup_skill(paths, destination, dest_dir)
+            replaced = dest_dir.with_name(f".{destination}.terrahash-replaced")
+            if replaced.exists() or replaced.is_symlink():
+                shutil.rmtree(replaced)
+            move_dir(dest_dir, replaced)
+            try:
+                move_dir(incomplete, dest_dir)
+            except Exception:
+                if not dest_dir.exists() and replaced.exists():
+                    move_dir(replaced, dest_dir)
+                raise
+        else:
+            move_dir(incomplete, dest_dir)
+        os.replace(pending, ownership)
+    except Exception as exc:
+        if pending.exists():
+            pending.unlink()
+        die(f"Failed to activate skill directory {destination}: {exc}")
+
+    if replaced is not None and replaced.exists():
+        shutil.rmtree(replaced)
 
 def print_plan(actions: list[dict[str, Any]]) -> None:
     if not actions:
@@ -795,6 +843,7 @@ def run(argv: list[str] | None = None) -> int:
             ensure_no_symlink(paths[key], key)
         ensure_no_symlink(cursor_root, ".cursor")
         ensure_no_symlink(skills_root, ".cursor/skills")
+        finalize_pending_ownership(paths, skills_root)
         actions = plan_actions(manifest, paths, skills_root)
         conflicts = [action for action in actions if action["action"] == "conflict"]
         if conflicts:

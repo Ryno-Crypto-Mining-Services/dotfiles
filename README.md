@@ -38,13 +38,29 @@ bash scripts/test.sh
 
 The runner uses temporary fake HOME directories and deliberately isolated Git/XDG configuration. CI is configured for Ubuntu and macOS with Bash syntax, ShellCheck, shfmt, and tests; that configuration is not evidence of a CI run. The local environment for this initial implementation is Linux with Bash 5.2, Git 2.56, Python 3.12, and ShellCheck 0.9.0. shfmt and macOS are unavailable locally; see the test output and CI for actual validation status.
 
+## Optional Cursor skills
+
+Pinned LangChain / LangGraph / Deep Agents skills (plus a few related research
+skills) can be installed separately into `~/.cursor/skills/` without changing the
+baseline shell/Git install:
+
+```sh
+scripts/install-cursor-skills.sh --dry-run
+scripts/install-cursor-skills.sh
+```
+
+This path stays offline and opt-in. It does not configure Cursor Cloud Agent
+sync, LangSmith tracing, or credentials. See [Cursor skills](docs/cursor-skills.md).
+
 ## Layout
 
 - `install.sh`, `uninstall.sh`: conservative installation and removal.
 - `shell/`: quiet shared shell defaults.
 - `git/`: minimal aliases and ignore patterns.
 - `bin/terrahash-doctor`: read-only environment summary.
+- `agent-skills/`: optional pinned Cursor skill manifest and vendor tree.
 - `scripts/test.sh`: isolated test runner.
+- `scripts/install-cursor-skills.sh`: opt-in Cursor skills installer.
 - `docs/`: design and Codespaces setup notes.
 - `.github/`: contributor instructions and CI.
 

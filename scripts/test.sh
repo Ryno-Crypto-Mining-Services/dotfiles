@@ -135,6 +135,9 @@ cp "$repo/install.sh" "$repo/uninstall.sh" "$space_repo/"
 cp -R "$repo/scripts" "$repo/shell" "$repo/git" "$repo/bin" "$space_repo/"
 chmod +x "$space_repo/install.sh" "$space_repo/uninstall.sh" "$space_repo/bin/terrahash-doctor"
 new_home 'space path target'
+# Ubuntu interactive shells may print a sudo tip from /etc/bash.bashrc when the
+# fake HOME lacks this marker and the user is in the sudo group.
+: >"$test_home/.sudo_as_admin_successful"
 env -i HOME="$test_home" XDG_CONFIG_HOME="$test_home/.config" GIT_CONFIG_NOSYSTEM=1 PATH="$PATH" \
   "$space_repo/install.sh" >/dev/null
 assert_file_contains "$test_home/.bashrc" "$space_repo/shell/bash.sh"
@@ -301,5 +304,8 @@ if grep -E '(^|[[:space:]])(curl|wget|apt-get|brew|npm|pip)([[:space:]]|$)' \
   "$repo/install.sh" "$repo/uninstall.sh" "$repo/shell/common.sh" "$repo/shell/bash.sh" "$repo/shell/zsh.sh" >/dev/null; then
   fail 'setup or shell startup contains a network/package bootstrap command'
 fi
+
+printf '%s\n' 'Cursor skills installer tests'
+bash "$repo/scripts/test-cursor-skills.sh"
 
 printf '%s\n' 'All isolated dotfiles tests passed.'

@@ -1,0 +1,6 @@
+Vendored from https://github.com/langchain-ai/skills-benchmarks
+Pinned commit recorded in agent-skills/sources.json.
+
+Repository license: MIT (see LICENSE). Copyright (c) LangChain, Inc.
+
+LangSmith skills under skills/main/langsmith-* are intentionally not vendored.

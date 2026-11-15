@@ -9,6 +9,8 @@ Thumbs.db
 *~
 *.bak
 *.tmp
+__pycache__/
+*.py[cod]
 .local/
 .config/terrahash-dotfiles/local.sh
 .kube/

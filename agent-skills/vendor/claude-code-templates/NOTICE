@@ -1,0 +1,11 @@
+Vendored from https://github.com/davila7/claude-code-templates
+Pinned commit recorded in agent-skills/sources.json.
+
+Repository license: MIT (see LICENSE). Copyright (c) 2025 Daniel (San) Ávila.
+
+Skill frontmatter provenance notes (as published upstream):
+- agents-langchain: license MIT (Orchestra Research)
+- langgraph: metadata.source vibeship-spawner-skills (Apache 2.0)
+- langfuse: metadata.source vibeship-spawner-skills (Apache 2.0)
+
+LangSmith skills and tracing plugins are not included.

@@ -387,16 +387,23 @@ def validate_manifest(manifest: Any, repo_root: Path) -> dict[str, Any]:
 
 def validate_hermes_home(raw: str | None, home: Path) -> Path:
     if raw is None or raw == "":
-        return home / ".hermes"
-    hermes_home = Path(raw)
-    if not hermes_home.is_absolute():
-        die("HERMES_HOME must be absolute when set.")
-    if "\n" in str(hermes_home) or "\r" in str(hermes_home):
-        die("HERMES_HOME cannot contain a newline.")
-    if hermes_home == Path("/"):
-        die("Refusing to use / as HERMES_HOME.")
+        hermes_home = home / ".hermes"
+    else:
+        hermes_home = Path(raw)
+        if not hermes_home.is_absolute():
+            die("HERMES_HOME must be absolute when set.")
+        if "\n" in str(hermes_home) or "\r" in str(hermes_home):
+            die("HERMES_HOME cannot contain a newline.")
+        if hermes_home == Path("/"):
+            die("Refusing to use / as HERMES_HOME.")
+    # Refuse a symlinked HERMES_HOME itself before resolving through parents
+    # (e.g. macOS /tmp → /private/tmp) so skills roots stay comparable.
     ensure_no_symlink(hermes_home, "HERMES_HOME")
-    return hermes_home
+    resolved = hermes_home.resolve()
+    if resolved == Path("/"):
+        die("Refusing HERMES_HOME that resolves to /.")
+    ensure_no_symlink(resolved, "HERMES_HOME")
+    return resolved
 
 
 def resolve_skills_root(target: str, home: Path) -> tuple[Path, Path]:
@@ -408,6 +415,7 @@ def resolve_skills_root(target: str, home: Path) -> tuple[Path, Path]:
         hermes_home = validate_hermes_home(os.environ.get("HERMES_HOME"), home)
         return hermes_home / "skills", hermes_home
     die(f"Unsupported install target: {target}")
+    return Path(), Path()  # unreachable; keeps type checkers honest
 
 
 def state_paths(state_home: Path, repo_root: Path, target: str) -> dict[str, Path]:

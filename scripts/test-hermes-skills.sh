@@ -187,6 +187,25 @@ export HERMES_HOME=/
 if run_installer "$fixture/scripts/install-hermes-skills.sh" --dry-run >/dev/null 2>&1; then
   fail 'installer accepted HERMES_HOME=/'
 fi
+export HERMES_HOME=/tmp/../
+if run_installer "$fixture/scripts/install-hermes-skills.sh" --dry-run >/dev/null 2>&1; then
+  fail 'installer accepted HERMES_HOME that resolves to /'
+fi
+unset HERMES_HOME
+
+printf '%s\n' 'Hermes skills: HERMES_HOME with redundant path components is resolved'
+fixture=$(setup_fixture_repo 'resolve-home')
+write_skill_tree "$fixture" 'resolve-skill' '# Resolve'
+write_manifest "$fixture"
+new_home 'resolve hermes home'
+base=$test_home/hermes-base
+mkdir -p "$base"
+export HERMES_HOME="$base/./nested/../nested"
+run_installer "$fixture/scripts/install-hermes-skills.sh" >/dev/null
+[ -f "$base/nested/skills/resolve-skill/SKILL.md" ] ||
+  fail 'resolved HERMES_HOME skills path missing'
+[ ! -e "$test_home/.hermes/skills/resolve-skill" ] ||
+  fail 'default ~/.hermes used despite resolved HERMES_HOME'
 unset HERMES_HOME
 
 printf '%s\n' 'Hermes skills: unmanaged conflict, unrelated skill, lock, upgrade'

@@ -85,6 +85,9 @@ scripts/install-cursor-skills.sh
 Requirements: Bash and Python 3 (standard library only). The installer does not
 use the network, package managers, `npx`, `sudo`, or Git remote operations.
 
+The same inventory can be installed into Hermes Agent’s skills library with
+`scripts/install-hermes-skills.sh` (see [Hermes skills](hermes-skills.md)).
+
 ## Ownership, updates, backups, and recovery
 
 Ownership state is stored under:

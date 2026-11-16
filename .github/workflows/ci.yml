@@ -42,5 +42,5 @@ jobs:
       - name: Check formatting
         run: shfmt -d -i 2 install.sh uninstall.sh scripts/*.sh shell/common.sh shell/bash.sh bin/terrahash-doctor
 
-      - name: Validate Cursor skills helper syntax
+      - name: Validate agent skills helper syntax
         run: python3 -m py_compile scripts/cursor-skills-helper.py

@@ -308,4 +308,7 @@ fi
 printf '%s\n' 'Cursor skills installer tests'
 bash "$repo/scripts/test-cursor-skills.sh"
 
+printf '%s\n' 'Hermes skills installer tests'
+bash "$repo/scripts/test-hermes-skills.sh"
+
 printf '%s\n' 'All isolated dotfiles tests passed.'

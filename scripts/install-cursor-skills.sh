@@ -64,7 +64,7 @@ helper=$repo_dir/scripts/cursor-skills-helper.py
   exit 1
 }
 
-args=(--repo-root "$repo_dir" --manifest "$manifest")
+args=(--repo-root "$repo_dir" --manifest "$manifest" --target cursor)
 if [ "$dry_run" -eq 1 ]; then
   args+=(--dry-run)
 fi

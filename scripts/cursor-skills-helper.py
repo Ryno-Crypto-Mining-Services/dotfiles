@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Offline Cursor skills installer helper for terrahash-dotfiles.
+"""Offline agent-skills installer helper for terrahash-dotfiles.
 
-Validates agent-skills/sources.json and installs ordinary copies into
-$HOME/.cursor/skills/<name>/. Ownership state lives under
-${XDG_STATE_HOME:-$HOME/.local/state}/terrahash-dotfiles/cursor-skills/.
+Validates agent-skills/sources.json and installs ordinary copies into a
+host-specific skills library:
+
+- cursor → $HOME/.cursor/skills/<name>/
+- hermes → ${HERMES_HOME:-$HOME/.hermes}/skills/<name>/
+
+Ownership state lives under
+${XDG_STATE_HOME:-$HOME/.local/state}/terrahash-dotfiles/<target>-skills/.
 """
 
 from __future__ import annotations
@@ -21,10 +26,24 @@ from typing import Any
 
 
 SCHEMA_VERSION = 2
-MANAGED_KIND = "terrahash-dotfiles-cursor-skills"
 OWNER_VERSION = 1
 VENDOR_ROOT_PREFIX = "agent-skills/vendor/"
 VENDOR_ROOT_ALLOWFILES = frozenset({"LICENSE", "NOTICE", "README.md"})
+
+TARGETS: dict[str, dict[str, str]] = {
+    "cursor": {
+        "label": "Cursor",
+        "state_dirname": "cursor-skills",
+        "managed_kind": "terrahash-dotfiles-cursor-skills",
+        "skills_label": ".cursor/skills",
+    },
+    "hermes": {
+        "label": "Hermes",
+        "state_dirname": "hermes-skills",
+        "managed_kind": "terrahash-dotfiles-hermes-skills",
+        "skills_label": "$HERMES_HOME/skills (default ~/.hermes/skills)",
+    },
+}
 
 
 class InstallError(Exception):
@@ -366,10 +385,36 @@ def validate_manifest(manifest: Any, repo_root: Path) -> dict[str, Any]:
     }
 
 
-def state_paths(state_home: Path, repo_root: Path) -> dict[str, Path]:
-    root = state_home / "terrahash-dotfiles" / "cursor-skills"
+def validate_hermes_home(raw: str | None, home: Path) -> Path:
+    if raw is None or raw == "":
+        return home / ".hermes"
+    hermes_home = Path(raw)
+    if not hermes_home.is_absolute():
+        die("HERMES_HOME must be absolute when set.")
+    if "\n" in str(hermes_home) or "\r" in str(hermes_home):
+        die("HERMES_HOME cannot contain a newline.")
+    if hermes_home == Path("/"):
+        die("Refusing to use / as HERMES_HOME.")
+    ensure_no_symlink(hermes_home, "HERMES_HOME")
+    return hermes_home
+
+
+def resolve_skills_root(target: str, home: Path) -> tuple[Path, Path]:
+    """Return (skills_root, label_parent) for symlink/ancestor checks."""
+    if target == "cursor":
+        parent = home / ".cursor"
+        return parent / "skills", parent
+    if target == "hermes":
+        hermes_home = validate_hermes_home(os.environ.get("HERMES_HOME"), home)
+        return hermes_home / "skills", hermes_home
+    die(f"Unsupported install target: {target}")
+
+
+def state_paths(state_home: Path, repo_root: Path, target: str) -> dict[str, Path]:
+    config = TARGETS[target]
+    root = state_home / "terrahash-dotfiles" / config["state_dirname"]
     if str(root).startswith(str(repo_root) + os.sep):
-        die("Cursor skills state must be outside the checkout.")
+        die(f"{config['label']} skills state must be outside the checkout.")
     return {
         "root": root,
         "managed": root / "managed",
@@ -426,7 +471,9 @@ def ownership_path(paths: dict[str, Path], destination: str) -> Path:
     return paths["managed"] / f"{destination}.json"
 
 
-def read_ownership(paths: dict[str, Path], destination: str) -> dict[str, Any] | None:
+def read_ownership(
+    paths: dict[str, Path], destination: str, managed_kind: str
+) -> dict[str, Any] | None:
     path = ownership_path(paths, destination)
     if path.is_symlink():
         die(f"Refusing symlinked ownership state: {path}")
@@ -437,7 +484,7 @@ def read_ownership(paths: dict[str, Path], destination: str) -> dict[str, Any] |
     data = load_json(path)
     if not isinstance(data, dict):
         die(f"Malformed ownership state: {path}")
-    if data.get("kind") != MANAGED_KIND or data.get("version") != OWNER_VERSION:
+    if data.get("kind") != managed_kind or data.get("version") != OWNER_VERSION:
         die(f"Unrecognized ownership state: {path}")
     return data
 
@@ -524,6 +571,7 @@ def plan_actions(
     manifest: dict[str, Any],
     paths: dict[str, Path],
     skills_root: Path,
+    managed_kind: str,
 ) -> list[dict[str, Any]]:
     actions: list[dict[str, Any]] = []
     desired = {skill["destination"]: skill for skill in manifest["skills"]}
@@ -531,7 +579,7 @@ def plan_actions(
     for destination, skill in desired.items():
         dest_dir = skills_root / destination
         incomplete = dest_dir.with_name(f".{destination}.terrahash-incomplete")
-        ownership = read_ownership(paths, destination)
+        ownership = read_ownership(paths, destination, managed_kind)
 
         if incomplete.exists() or incomplete.is_symlink():
             actions.append(
@@ -633,6 +681,7 @@ def apply_action(
     manifest: dict[str, Any],
     paths: dict[str, Path],
     skills_root: Path,
+    managed_kind: str,
 ) -> None:
     kind = action["action"]
     destination = action["destination"]
@@ -683,7 +732,7 @@ def apply_action(
             die(f"Failed to install skill directory {destination}: {exc}")
 
     record = {
-        "kind": MANAGED_KIND,
+        "kind": managed_kind,
         "version": OWNER_VERSION,
         "name": skill["name"],
         "destination": destination,
@@ -695,9 +744,10 @@ def apply_action(
     }
     write_ownership(paths, record)
 
-def print_plan(actions: list[dict[str, Any]]) -> None:
+
+def print_plan(actions: list[dict[str, Any]], label: str) -> None:
     if not actions:
-        print("No managed Cursor skills to install.")
+        print(f"No managed {label} skills to install.")
         return
     for action in actions:
         destination = action["destination"]
@@ -718,9 +768,9 @@ def print_plan(actions: list[dict[str, Any]]) -> None:
             die(f"Unknown planned action: {kind}")
 
 
-def print_result(actions: list[dict[str, Any]]) -> None:
+def print_result(actions: list[dict[str, Any]], label: str) -> None:
     if not actions:
-        print("No managed Cursor skills to install.")
+        print(f"No managed {label} skills to install.")
         return
     for action in actions:
         destination = action["destination"]
@@ -745,9 +795,22 @@ def run(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--repo-root", required=True)
     parser.add_argument("--manifest", required=True)
+    parser.add_argument(
+        "--target",
+        choices=sorted(TARGETS),
+        default="cursor",
+        help="Host skills library to install into (default: cursor)",
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args(argv)
+
+    target = args.target
+    if target not in TARGETS:
+        die(f"Unsupported install target: {target}")
+    target_config = TARGETS[target]
+    label = target_config["label"]
+    managed_kind = target_config["managed_kind"]
 
     repo_root = Path(args.repo_root)
     if not repo_root.is_absolute():
@@ -757,7 +820,7 @@ def run(argv: list[str] | None = None) -> int:
 
     home = validate_home(Path(os.environ.get("HOME", "")))
     state_home = validate_state_home(os.environ.get("XDG_STATE_HOME"), home)
-    paths = state_paths(state_home, repo_root)
+    paths = state_paths(state_home, repo_root, target)
 
     for key in ("root", "managed", "backups", "lock", "staging"):
         ensure_no_symlink(paths[key], key)
@@ -772,17 +835,16 @@ def run(argv: list[str] | None = None) -> int:
         print(f"Manifest OK: {len(manifest['skills'])} skill(s).")
         return 0
 
-    cursor_root = home / ".cursor"
-    skills_root = cursor_root / "skills"
-    ensure_no_symlink(cursor_root, ".cursor")
-    ensure_no_symlink(skills_root, ".cursor/skills")
+    skills_root, skills_parent = resolve_skills_root(target, home)
+    ensure_no_symlink(skills_parent, target_config["skills_label"].split("/")[0])
+    ensure_no_symlink(skills_root, target_config["skills_label"])
     ensure_safe_ancestors(skills_root, home)
 
-    actions = plan_actions(manifest, paths, skills_root)
+    actions = plan_actions(manifest, paths, skills_root, managed_kind)
     conflicts = [action for action in actions if action["action"] == "conflict"]
 
     if args.dry_run:
-        print_plan(actions)
+        print_plan(actions, label)
         if conflicts:
             return 1
         return 0
@@ -793,21 +855,18 @@ def run(argv: list[str] | None = None) -> int:
         # Revalidate after lock.
         for key in ("root", "managed", "backups", "lock", "staging"):
             ensure_no_symlink(paths[key], key)
-        ensure_no_symlink(cursor_root, ".cursor")
-        ensure_no_symlink(skills_root, ".cursor/skills")
-        actions = plan_actions(manifest, paths, skills_root)
+        ensure_no_symlink(skills_parent, target_config["skills_label"].split("/")[0])
+        ensure_no_symlink(skills_root, target_config["skills_label"])
+        actions = plan_actions(manifest, paths, skills_root, managed_kind)
         conflicts = [action for action in actions if action["action"] == "conflict"]
         if conflicts:
-            print_result(actions)
+            print_result(actions, label)
             return 1
         for action in actions:
             if action["action"] in ("install", "update"):
-                apply_action(action, manifest, paths, skills_root)
-        print_result(actions)
-        if not actions:
-            print("Cursor skills installation complete.")
-        else:
-            print("Cursor skills installation complete.")
+                apply_action(action, manifest, paths, skills_root, managed_kind)
+        print_result(actions, label)
+        print(f"{label} skills installation complete.")
         return 0
     finally:
         lock.release()
@@ -817,7 +876,7 @@ def main() -> None:
     try:
         raise SystemExit(run())
     except InstallError as exc:
-        eprint(f"terrahash-dotfiles cursor-skills: {exc}")
+        eprint(f"terrahash-dotfiles agent-skills: {exc}")
         raise SystemExit(1) from None
 
 

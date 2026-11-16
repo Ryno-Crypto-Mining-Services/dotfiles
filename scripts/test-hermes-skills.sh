@@ -187,7 +187,10 @@ export HERMES_HOME=/
 if run_installer "$fixture/scripts/install-hermes-skills.sh" --dry-run >/dev/null 2>&1; then
   fail 'installer accepted HERMES_HOME=/'
 fi
-export HERMES_HOME=/tmp/../
+# /tmp and /var are often symlinked into /private on macOS, so /tmp/../ does
+# not collapse to /. Prefer a real directory prefix that resolves to / on both
+# Linux and macOS.
+export HERMES_HOME=/usr/../
 if run_installer "$fixture/scripts/install-hermes-skills.sh" --dry-run >/dev/null 2>&1; then
   fail 'installer accepted HERMES_HOME that resolves to /'
 fi

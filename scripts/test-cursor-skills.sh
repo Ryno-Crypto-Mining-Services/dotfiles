@@ -365,7 +365,10 @@ for expected in \
   agents-langchain langgraph langfuse \
   ecosystem-primer langchain-dependencies langchain-fundamentals langchain-middleware \
   langchain-rag langgraph-fundamentals langgraph-persistence langgraph-human-in-the-loop \
-  deep-agents-core deep-agents-memory deep-agents-orchestration; do
+  deep-agents-core deep-agents-memory deep-agents-orchestration \
+  codebase-inspection requesting-code-review simplify-code spike dogfood \
+  python-debugpy sdlc-review grounded-citations blocked-page-recovery \
+  claude-code codex document-to-action-items; do
   printf '%s\n' "$out" | grep -F "Would install skill: $expected" >/dev/null ||
     fail "real-pin dry-run missing $expected"
 done
@@ -390,6 +393,14 @@ run_installer "$repo/scripts/install-cursor-skills.sh" >/dev/null
   fail 'langchain-agent-tracing was incorrectly installed'
 [ -f "$test_home/.cursor/skills/agents-langchain/references/rag.md" ] ||
   fail 'agents-langchain references were not installed'
+[ -f "$test_home/.cursor/skills/dogfood/references/issue-taxonomy.md" ] ||
+  fail 'dogfood references were not installed'
+[ -f "$test_home/.cursor/skills/grounded-citations/scripts/sources.py" ] ||
+  fail 'grounded-citations scripts were not installed'
+[ -f "$test_home/.cursor/skills/blocked-page-recovery/scripts/recover_page.py" ] ||
+  fail 'blocked-page-recovery scripts were not installed'
+[ -f "$test_home/.cursor/skills/python-debugpy/SKILL.md" ] ||
+  fail 'python-debugpy was not installed from hermes-agent'
 # LangSmith skills must remain absent
 [ ! -e "$test_home/.cursor/skills/langsmith-trace" ] ||
   fail 'langsmith-trace was incorrectly installed'

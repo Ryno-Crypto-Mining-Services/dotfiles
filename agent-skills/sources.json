@@ -1,23 +1,47 @@
 {
   "missing_requested_skills": [],
   "requested_skills": [
+    "blocked-page-recovery",
+    "claude-code",
+    "codebase-inspection",
+    "codex",
+    "deep-agents-core",
+    "deep-agents-memory",
+    "deep-agents-orchestration",
+    "document-to-action-items",
+    "dogfood",
     "ecosystem-primer",
+    "grounded-citations",
     "langchain-dependencies",
     "langchain-fundamentals",
     "langchain-middleware",
     "langchain-rag",
     "langgraph-fundamentals",
-    "langgraph-persistence",
     "langgraph-human-in-the-loop",
-    "deep-agents-core",
-    "deep-agents-memory",
-    "deep-agents-orchestration"
+    "langgraph-persistence",
+    "python-debugpy",
+    "requesting-code-review",
+    "sdlc-review",
+    "simplify-code",
+    "spike"
   ],
   "schema_version": 2,
   "selected_from_named_paths": [
     "agents-langchain",
+    "blocked-page-recovery",
+    "claude-code",
+    "codebase-inspection",
+    "codex",
+    "document-to-action-items",
+    "dogfood",
+    "grounded-citations",
     "langfuse",
-    "langgraph"
+    "langgraph",
+    "python-debugpy",
+    "requesting-code-review",
+    "sdlc-review",
+    "simplify-code",
+    "spike"
   ],
   "skills": [
     {
@@ -48,6 +72,67 @@
       "upstream": "claude-code-templates",
       "upstream_path": "cli-tool/components/skills/ai-research/agents-langchain",
       "vendor_path": "agent-skills/vendor/claude-code-templates/agents-langchain"
+    },
+    {
+      "destination": "blocked-page-recovery",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "b71179e82ff27c002e6593e792d9a64dad9a444901b8938f30204fa115592061"
+        },
+        {
+          "executable": false,
+          "path": "scripts/recover_page.py",
+          "sha256": "22b996996ae2bf252b31cfd2636231f08936729a381dce7ba8bfa4afb8ffe8c6"
+        }
+      ],
+      "name": "blocked-page-recovery",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/web/blocked-page-recovery",
+      "vendor_path": "agent-skills/vendor/hermes-agent/blocked-page-recovery"
+    },
+    {
+      "destination": "claude-code",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "9cf9b448e9272335d90dc8552126b4d82022ae0cdc783a6d206a657c7254ae54"
+        }
+      ],
+      "name": "claude-code",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/autonomous-ai-agents/claude-code",
+      "vendor_path": "agent-skills/vendor/hermes-agent/claude-code"
+    },
+    {
+      "destination": "codebase-inspection",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "d62554263461919dff7d77c3c0c284c2190c894f312a84d7a770a030dab642dc"
+        }
+      ],
+      "name": "codebase-inspection",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/software-development/codebase-inspection",
+      "vendor_path": "agent-skills/vendor/hermes-agent/codebase-inspection"
+    },
+    {
+      "destination": "codex",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "1b15b57bcaba128b83ebe9f050b6873958198a1570bc801d4ca0406fb7e3271d"
+        }
+      ],
+      "name": "codex",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/autonomous-ai-agents/codex",
+      "vendor_path": "agent-skills/vendor/hermes-agent/codex"
     },
     {
       "destination": "deep-agents-core",
@@ -92,6 +177,44 @@
       "vendor_path": "agent-skills/vendor/skills-benchmarks/deep-agents-orchestration"
     },
     {
+      "destination": "document-to-action-items",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "033f65062760ad4a58e6e4fc12340d4fef1c9556dbb075ad93fb4edb333a80ad"
+        }
+      ],
+      "name": "document-to-action-items",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/productivity/document-to-action-items",
+      "vendor_path": "agent-skills/vendor/hermes-agent/document-to-action-items"
+    },
+    {
+      "destination": "dogfood",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "b0c93d87d160da63ad489743880bdcee634ccb7f5b68c15a668ef80048b37916"
+        },
+        {
+          "executable": false,
+          "path": "references/issue-taxonomy.md",
+          "sha256": "b90546fab5b59494ebea35b957ccc1d98bab8eaeaaa3529a142b15ea96df2b31"
+        },
+        {
+          "executable": false,
+          "path": "templates/dogfood-report-template.md",
+          "sha256": "6db9127715d3d1482542e48dd2d71fcb25238e614b1e5739ec193fa143962a26"
+        }
+      ],
+      "name": "dogfood",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/software-development/dogfood",
+      "vendor_path": "agent-skills/vendor/hermes-agent/dogfood"
+    },
+    {
       "destination": "ecosystem-primer",
       "files": [
         {
@@ -104,6 +227,40 @@
       "upstream": "skills-benchmarks",
       "upstream_path": "skills/benchmarks/ecosystem-primer",
       "vendor_path": "agent-skills/vendor/skills-benchmarks/ecosystem-primer"
+    },
+    {
+      "destination": "grounded-citations",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "1e022ba6244fc68825127183d4632263f47d64dc857ea8d65c5e86d605b74f38"
+        },
+        {
+          "executable": false,
+          "path": "references/citation-formats.md",
+          "sha256": "0cf381542b4c636cc7e365f9213e41d284d346b14eebe0abea4cfa78e728b1ae"
+        },
+        {
+          "executable": false,
+          "path": "references/grounding-rationale.md",
+          "sha256": "2835754857ea05a1c801e88a50d4c2b4cc6ebd52cc4cc1f5741dba05f5af73c1"
+        },
+        {
+          "executable": false,
+          "path": "scripts/_hermes_home.py",
+          "sha256": "e2fba7b30ee22afdb21e8411b6a18431da6efc9ec3ef55e2223481bf906f4376"
+        },
+        {
+          "executable": false,
+          "path": "scripts/sources.py",
+          "sha256": "0c216e29e092faedcaa1ebae129db15dfc100465169490704b3628446db96788"
+        }
+      ],
+      "name": "grounded-citations",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/research/grounded-citations",
+      "vendor_path": "agent-skills/vendor/hermes-agent/grounded-citations"
     },
     {
       "destination": "langchain-dependencies",
@@ -230,6 +387,76 @@
       "upstream": "skills-benchmarks",
       "upstream_path": "skills/main/langgraph-persistence",
       "vendor_path": "agent-skills/vendor/skills-benchmarks/langgraph-persistence"
+    },
+    {
+      "destination": "python-debugpy",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "cb1b8b0795a56fa0fd79f80f3363f1ad79d404a6757d6cf547971cf89f21155e"
+        }
+      ],
+      "name": "python-debugpy",
+      "upstream": "hermes-agent",
+      "upstream_path": "optional-skills/software-development/python-debugpy",
+      "vendor_path": "agent-skills/vendor/hermes-agent/python-debugpy"
+    },
+    {
+      "destination": "requesting-code-review",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "1e26ced9f05e357950e035b93ad1a937dd8a9e578a44d3c8d4fa734a09b7f814"
+        }
+      ],
+      "name": "requesting-code-review",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/software-development/requesting-code-review",
+      "vendor_path": "agent-skills/vendor/hermes-agent/requesting-code-review"
+    },
+    {
+      "destination": "sdlc-review",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "ce90e8a3e145cce69c62880dc85921700110879f9290952d6cec28218503155f"
+        }
+      ],
+      "name": "sdlc-review",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/devops/sdlc-review",
+      "vendor_path": "agent-skills/vendor/hermes-agent/sdlc-review"
+    },
+    {
+      "destination": "simplify-code",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "9ee977c3362a1c07f2e327198e066ddb3c0ed67709706fc410165ee820b2ca01"
+        }
+      ],
+      "name": "simplify-code",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/software-development/simplify-code",
+      "vendor_path": "agent-skills/vendor/hermes-agent/simplify-code"
+    },
+    {
+      "destination": "spike",
+      "files": [
+        {
+          "executable": false,
+          "path": "SKILL.md",
+          "sha256": "573d8fc0d6699eaf5308e742402bc02c883152ffeebe14607f164c6c538495c2"
+        }
+      ],
+      "name": "spike",
+      "upstream": "hermes-agent",
+      "upstream_path": "skills/software-development/spike",
+      "vendor_path": "agent-skills/vendor/hermes-agent/spike"
     }
   ],
   "upstreams": {
@@ -247,6 +474,22 @@
         "langsmith-skills upstream remains out of scope."
       ],
       "repository": "https://github.com/davila7/claude-code-templates"
+    },
+    "hermes-agent": {
+      "commit": "3b421578588243f920886e6fe79a6faa87ea026e",
+      "license": {
+        "copyright": "Copyright (c) 2025 Nous Research",
+        "name": "MIT License",
+        "path": "LICENSE",
+        "spdx_id": "MIT"
+      },
+      "notes": [
+        "Selected skills/<category>/<name> and optional-skills/<category>/<name> paths reviewed for TerraHash Autopilot development work.",
+        "Payloads are upstream-verbatim at this pin and byte-identical to the corresponding Hermes profile library copies.",
+        "Locally curated profile-library variants are not vendored; only upstream-verbatim payloads are carried.",
+        "LangSmith skills and tracing plugins are not included."
+      ],
+      "repository": "https://github.com/NousResearch/hermes-agent"
     },
     "langchain-skills": {
       "commit": "8f4f0a4fee70ca54d1d2674f0cb56dfc554a5ab4",

@@ -262,7 +262,10 @@ for expected in \
   agents-langchain langgraph langfuse \
   ecosystem-primer langchain-dependencies langchain-fundamentals langchain-middleware \
   langchain-rag langgraph-fundamentals langgraph-persistence langgraph-human-in-the-loop \
-  deep-agents-core deep-agents-memory deep-agents-orchestration; do
+  deep-agents-core deep-agents-memory deep-agents-orchestration \
+  codebase-inspection requesting-code-review simplify-code spike dogfood \
+  python-debugpy sdlc-review grounded-citations blocked-page-recovery \
+  claude-code codex document-to-action-items; do
   printf '%s\n' "$out" | grep -F "Would install skill: $expected" >/dev/null ||
     fail "real-pin dry-run missing $expected"
 done
@@ -274,6 +277,14 @@ run_installer "$repo/scripts/install-hermes-skills.sh" >/dev/null
   fail 'ecosystem-primer was not installed from skills-benchmarks'
 [ -f "$test_home/.hermes/skills/deep-agents-orchestration/SKILL.md" ] ||
   fail 'deep-agents-orchestration was not installed from skills-benchmarks'
+[ -f "$test_home/.hermes/skills/dogfood/references/issue-taxonomy.md" ] ||
+  fail 'dogfood references were not installed'
+[ -f "$test_home/.hermes/skills/grounded-citations/scripts/sources.py" ] ||
+  fail 'grounded-citations scripts were not installed'
+[ -f "$test_home/.hermes/skills/blocked-page-recovery/scripts/recover_page.py" ] ||
+  fail 'blocked-page-recovery scripts were not installed'
+[ -f "$test_home/.hermes/skills/python-debugpy/SKILL.md" ] ||
+  fail 'python-debugpy was not installed from hermes-agent'
 [ ! -e "$test_home/.hermes/skills/langsmith-trace" ] ||
   fail 'langsmith-trace was incorrectly installed'
 [ ! -e "$test_home/.cursor/skills" ] ||

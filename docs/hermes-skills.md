@@ -12,6 +12,12 @@ category layouts used by bundled skills). This installer places flat skill
 directories at the skills root, matching the in-repo `agent-skills/vendor/`
 layout.
 
+A skill installed here and a same-named skill in a nested category directory
+resolve only while their payloads are byte-identical; two different copies of
+one name are ambiguous and do not resolve. The vendored payloads are therefore
+upstream-verbatim, and skills whose local library copy has been edited are not
+part of this inventory.
+
 The mechanism is offline and opt-in. It is separate from `./install.sh` and from
 `hermes skills` / the Hermes skills hub. Repository storage alone does not sync
 or publish skills to a remote Hermes profile.

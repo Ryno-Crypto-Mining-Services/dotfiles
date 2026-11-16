@@ -35,6 +35,22 @@ agent-skills/vendor/<upstream-id>/<skill-name>/
    - `agents-langchain`
    - `langgraph`
    - `langfuse`
+4. [`NousResearch/hermes-agent`](https://github.com/NousResearch/hermes-agent)
+   at tag `v0.23.1` — development-workflow skills reviewed for TerraHash
+   Autopilot work, under `skills/<category>/<name>` and
+   `optional-skills/<category>/<name>`:
+   - `codebase-inspection`
+   - `requesting-code-review`
+   - `simplify-code`
+   - `spike`
+   - `dogfood`
+   - `python-debugpy`
+   - `sdlc-review`
+   - `grounded-citations`
+   - `blocked-page-recovery`
+   - `claude-code`
+   - `codex`
+   - `document-to-action-items`
 
 ### Out of scope
 
@@ -42,6 +58,12 @@ agent-skills/vendor/<upstream-id>/<skill-name>/
   and LangSmith tracing plugins (not vendored).
 - LangSmith skills under `skills-benchmarks` `skills/main/langsmith-*`
   (intentionally omitted).
+- Locally curated profile-library variants of `hermes-agent` skills
+  (`github`, `systematic-debugging`, `test-driven-development`,
+  `hermes-agent`). Their library copies differ from the upstream payloads, so
+  vendoring upstream bytes would put two different same-named skills in one
+  Hermes library, where the loader cannot resolve them. Only upstream-verbatim
+  payloads are carried.
 
 ## Pinned sources and selection policy
 
@@ -55,6 +77,10 @@ Selection rules:
   licensing permits.
 - Missing requested names are recorded; plugin skills from langchain-skills are
   not used as silent substitutes.
+- Payloads are upstream-verbatim at the pinned commit. A skill whose local
+  library copy has been edited is not vendored, because an installed copy and
+  the library copy of one name must stay byte-identical for the loader to
+  resolve the name.
 - Integrity validation fails closed on missing, unexpected, or mismatched files
   and on executable-mode mismatches.
 
@@ -65,6 +91,7 @@ Selection rules:
 | skills-benchmarks | MIT (`LICENSE`, Copyright LangChain, Inc.) |
 | langchain-skills | MIT (`LICENSE`, Copyright LangChain, Inc.) |
 | claude-code-templates | MIT (`LICENSE`, Copyright 2025 Daniel (San) Ávila) |
+| hermes-agent | MIT (`LICENSE`, Copyright (c) 2025 Nous Research) |
 
 Vendored copies retain upstream `LICENSE` / `NOTICE` files under each
 `agent-skills/vendor/<upstream-id>/` tree. The `langgraph` and `langfuse` skill

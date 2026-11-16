@@ -1,0 +1,12 @@
+Vendored from https://github.com/NousResearch/hermes-agent
+Pinned commit recorded in agent-skills/sources.json (tag v0.23.1).
+
+Repository license: MIT (see LICENSE). Copyright (c) 2025 Nous Research.
+
+Selected skills/<category>/<name> and optional-skills/<category>/<name> paths
+reviewed for TerraHash Autopilot development work.
+
+Locally curated profile-library variants are intentionally not vendored: this
+inventory holds upstream-verbatim payloads only.
+
+LangSmith skills and tracing plugins are not included.

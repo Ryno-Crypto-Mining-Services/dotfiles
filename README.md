@@ -40,9 +40,10 @@ The runner uses temporary fake HOME directories and deliberately isolated Git/XD
 
 ## Optional Cursor and Hermes skills
 
-Pinned LangChain / LangGraph / Deep Agents skills (plus a few related research
-skills) can be installed separately from the shared `agent-skills/` inventory
-without changing the baseline shell/Git install:
+Pinned LangChain / LangGraph / Deep Agents skills, plus development-workflow
+skills reviewed for TerraHash Autopilot work, can be installed separately from
+the shared `agent-skills/` inventory without changing the baseline shell/Git
+install:
 
 ```sh
 scripts/install-cursor-skills.sh --dry-run
